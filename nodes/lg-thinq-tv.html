@@ -1,0 +1,81 @@
+<script type="text/javascript">
+    (function () {
+        "use strict";
+        RED.nodes.registerType("lg-thinq-tv", {
+            category: "LG ThinQ",
+            color: "#E9967A",
+            defaults: {
+                name: { value: "" },
+                ip: { value: "", required: true },
+                mac: { value: "" },
+                broadcast: { value: "255.255.255.255" },
+                secure: { value: false },
+                reconnect: { value: 5 }
+            },
+            credentials: {
+                clientKey: { type: "password" }
+            },
+            inputs: 1,
+            outputs: 1,
+            inputLabels: "command",
+            outputLabels: "power / status",
+            icon: "font-awesome/fa-television",
+            paletteLabel: "TV",
+            label: function () {
+                return this.name || this.ip || "LG TV";
+            }
+        });
+    }());
+</script>
+
+<script type="text/html" data-template-name="lg-thinq-tv">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Living room OLED">
+    </div>
+    <div class="form-row">
+        <label for="node-input-ip"><i class="fa fa-globe"></i> IP</label>
+        <input type="text" id="node-input-ip" placeholder="192.168.0.50">
+    </div>
+    <div class="form-row">
+        <label for="node-input-mac"><i class="fa fa-info"></i> MAC</label>
+        <input type="text" id="node-input-mac" placeholder="needed for power on">
+    </div>
+    <div class="form-row">
+        <label for="node-input-broadcast"><i class="fa fa-wifi"></i> Broadcast</label>
+        <input type="text" id="node-input-broadcast" placeholder="255.255.255.255">
+    </div>
+    <div class="form-row">
+        <label for="node-input-reconnect"><i class="fa fa-clock-o"></i> Reconnect (s)</label>
+        <input type="number" id="node-input-reconnect" min="2" style="width:80px;">
+    </div>
+    <div class="form-row">
+        <label></label>
+        <label for="node-input-secure" style="width:70%;">
+            <input type="checkbox" id="node-input-secure" style="display:inline-block;width:auto;margin-right:8px;">
+            Secure websocket (wss:3001)
+        </label>
+    </div>
+    <div class="form-tips">
+        webOS / OLED TVs use the local SSAP API, not ThinQ Connect. First connect shows a pairing prompt on the TV — accept it once.
+        Enable <b>Mobile TV On</b> / <b>Quick Start+</b> so Wake-on-LAN can turn the TV on. Give the TV a DHCP reservation.
+        Recent OLEDs that refuse port 3000 need Secure checked.
+    </div>
+</script>
+
+<script type="text/markdown" data-help-name="lg-thinq-tv">
+LG webOS / OLED TV
+
+Local LAN control. ThinQ Connect does not include TVs, so this node talks SSAP on the TV itself.
+
+### Inputs
+
+- `"on"` / `"off"` / `"toggle"` / `"status"`
+- `{ "volume": 12 }`, `{ "mute": true }`, `{ "app": "netflix" }`, `{ "toast": "Washer done" }`
+
+### Output
+
+Power events: `{ "power": true, "connected": true, "state": "On" }`
+
+MAC is required for power-on (Wake-on-LAN). The pairing key is stored as a Node-RED credential.
+</script>

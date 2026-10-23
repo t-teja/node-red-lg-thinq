@@ -1,0 +1,146 @@
+<script type="text/javascript">
+    (function () {
+        "use strict";
+        RED.nodes.registerType("lg-thinq-account", {
+            category: "config",
+            defaults: {
+                name: { value: "" },
+                country: { value: "IN" },
+                clientId: { value: "" },
+                pollSeconds: { value: 60, validate: RED.validators.number() },
+                realtime: { value: true }
+            },
+            credentials: {
+                pat: { type: "password" }
+            },
+            label: function () {
+                return this.name || "LG ThinQ (" + (this.country || "IN") + ")";
+            },
+            oneditprepare: function () {
+                if (!$("#node-config-input-clientId").val()) {
+                    const id = (window.crypto && crypto.randomUUID)
+                        ? crypto.randomUUID()
+                        : "thinq-" + Math.random().toString(16).slice(2) + Date.now().toString(16);
+                    $("#node-config-input-clientId").val(id);
+                }
+                const node = this;
+                $("#lg-thinq-test").on("click", function () {
+                    const $status = $("#lg-thinq-test-status");
+                    $status.text("Testing…");
+                    $.ajax({
+                        url: "lg-thinq/devices",
+                        method: "POST",
+                        contentType: "application/json",
+                        data: JSON.stringify({
+                            id: node.id,
+                            country: $("#node-config-input-country").val(),
+                            clientId: $("#node-config-input-clientId").val(),
+                            pat: $("#node-config-input-pat").val()
+                        })
+                    }).done(function (body) {
+                        const devices = (body && body.devices) || [];
+                        if (!devices.length) {
+                            $status.text("Connected, but no devices on this account.");
+                            return;
+                        }
+                        const lines = devices.map(function (d) {
+                            return d.name + " — " + d.type.replace("DEVICE_", "");
+                        });
+                        $status.text("OK · " + devices.length + " device(s)\n" + lines.join("\n"));
+                    }).fail(function (xhr) {
+                        const err = (xhr.responseJSON && xhr.responseJSON.error) || xhr.statusText || "failed";
+                        $status.text("Failed: " + err);
+                    });
+                });
+            }
+        });
+    }());
+</script>
+
+<script type="text/html" data-template-name="lg-thinq-account">
+    <div class="form-row">
+        <label for="node-config-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-config-input-name" placeholder="Home ThinQ">
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-country"><i class="fa fa-globe"></i> Country</label>
+        <select id="node-config-input-country">
+            <option value="IN">India (IN)</option>
+            <option value="US">United States (US)</option>
+            <option value="GB">United Kingdom (GB)</option>
+            <option value="KR">Korea (KR)</option>
+            <option value="AE">United Arab Emirates (AE)</option>
+            <option value="AU">Australia (AU)</option>
+            <option value="SG">Singapore (SG)</option>
+            <option value="DE">Germany (DE)</option>
+            <option value="FR">France (FR)</option>
+            <option value="IT">Italy (IT)</option>
+            <option value="ES">Spain (ES)</option>
+            <option value="NL">Netherlands (NL)</option>
+            <option value="PT">Portugal (PT)</option>
+            <option value="CA">Canada (CA)</option>
+            <option value="JP">Japan (JP)</option>
+            <option value="MY">Malaysia (MY)</option>
+            <option value="TH">Thailand (TH)</option>
+            <option value="PH">Philippines (PH)</option>
+            <option value="ID">Indonesia (ID)</option>
+            <option value="VN">Vietnam (VN)</option>
+            <option value="NZ">New Zealand (NZ)</option>
+            <option value="HK">Hong Kong (HK)</option>
+            <option value="TW">Taiwan (TW)</option>
+            <option value="ZA">South Africa (ZA)</option>
+            <option value="BR">Brazil (BR)</option>
+        </select>
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-pat"><i class="fa fa-key"></i> PAT</label>
+        <input type="password" id="node-config-input-pat" placeholder="Personal Access Token">
+    </div>
+    <div class="form-row">
+        <label></label>
+        <button type="button" id="lg-thinq-test" class="red-ui-button">Test connection</button>
+    </div>
+    <div class="form-row">
+        <label></label>
+        <pre id="lg-thinq-test-status" style="margin:0;white-space:pre-wrap;font-size:12px;min-height:1.4em;"></pre>
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-pollSeconds"><i class="fa fa-clock-o"></i> Poll (s)</label>
+        <input type="number" id="node-config-input-pollSeconds" min="10" style="width:80px;">
+    </div>
+    <div class="form-row">
+        <label></label>
+        <label for="node-config-input-realtime" style="width:70%;">
+            <input type="checkbox" id="node-config-input-realtime" style="display:inline-block;width:auto;margin-right:8px;">
+            Realtime events (MQTT)
+        </label>
+    </div>
+    <div class="form-row">
+        <label for="node-config-input-clientId"><i class="fa fa-fingerprint"></i> Client ID</label>
+        <input type="text" id="node-config-input-clientId">
+    </div>
+    <div class="form-tips">
+        Create a token at <a href="https://connect-pat.lgthinq.com" target="_blank">connect-pat.lgthinq.com</a>
+        with the ThinQ app account. Enable view, status, control, event, and push scopes.
+        Country must match that account. The token is stored as a Node-RED credential, not in the flow JSON.
+    </div>
+</script>
+
+<script type="text/markdown" data-help-name="lg-thinq-account">
+LG ThinQ account
+
+Shared login for every `lg-thinq-device` node. Uses LG's official ThinQ Connect API and a Personal Access Token.
+
+### Setup
+
+1. Open [connect-pat.lgthinq.com](https://connect-pat.lgthinq.com)
+2. Sign in with the same account as the ThinQ app
+3. Create a token with view, status, control, event, and push scopes
+4. Paste it here, pick the account country, click **Test connection**
+
+The token is stored in Node-RED credentials (`flows_cred.json`). Client ID is generated once and reused so LG does not throttle new MQTT clients.
+
+### Poll vs realtime
+
+Poll is a fallback heartbeat (default 60s). Realtime uses one AWS IoT MQTT session for the account and pushes cycle-complete / door / error events immediately.
+</script>

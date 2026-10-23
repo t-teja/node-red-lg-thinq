@@ -1,0 +1,55 @@
+{
+  "name": "@tteja/node-red-lg-thinq",
+  "version": "0.1.0",
+  "description": "Node-RED nodes for LG ThinQ Connect appliances and webOS TVs. Official PAT auth, live status, and cycle events.",
+  "license": "MIT",
+  "author": "Teja",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/t-teja/node-red-lg-thinq.git"
+  },
+  "bugs": {
+    "url": "https://github.com/t-teja/node-red-lg-thinq/issues"
+  },
+  "homepage": "https://github.com/t-teja/node-red-lg-thinq#readme",
+  "files": [
+    "lib",
+    "nodes",
+    "examples",
+    "LICENSE",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "keywords": [
+    "lg",
+    "thinq",
+    "webos",
+    "oled",
+    "washer",
+    "dryer",
+    "air-conditioner",
+    "refrigerator"
+  ],
+  "scripts": {
+    "test": "node --test test/commands.test.js test/mqtt-parse.test.js test/normalize.test.js"
+  },
+  "node-red": {
+    "version": ">=3.0.0",
+    "nodes": {
+      "lg-thinq-account": "nodes/lg-thinq-account.js",
+      "lg-thinq-device": "nodes/lg-thinq-device.js",
+      "lg-thinq-tv": "nodes/lg-thinq-tv.js"
+    }
+  },
+  "dependencies": {
+    "lgtv2": "^1.6.3",
+    "thinqconnect": "0.9.10-beta",
+    "uuid": "^11.0.3",
+    "wake_on_lan": "^1.0.0"
+  }
+}

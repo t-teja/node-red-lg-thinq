@@ -1,0 +1,11 @@
+node_modules/
+npm-debug.log*
+.DS_Store
+coverage/
+*.tgz
+.env
+.env.*
+mqtt.json
+*.pem
+*.key
+lg-thinq/

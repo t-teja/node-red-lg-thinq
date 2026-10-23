@@ -1,0 +1,132 @@
+<script type="text/javascript">
+    (function () {
+        "use strict";
+        RED.nodes.registerType("lg-thinq-device", {
+            category: "LG ThinQ",
+            color: "#E9967A",
+            defaults: {
+                name: { value: "" },
+                account: { value: "", type: "lg-thinq-account", required: true },
+                deviceId: { value: "", required: true },
+                deviceName: { value: "" },
+                deviceType: { value: "" },
+                deviceModel: { value: "" },
+                dashboardField: { value: "" },
+                raw: { value: false }
+            },
+            inputs: 1,
+            outputs: 2,
+            inputLabels: "command / status",
+            outputLabels: ["state", "event"],
+            icon: "font-awesome/fa-cube",
+            paletteLabel: "Device",
+            label: function () {
+                return this.name || this.deviceName || "LG device";
+            },
+            oneditprepare: function () {
+                const node = this;
+                const $device = $("#node-input-deviceId");
+                function loadDevices() {
+                    const account = $("#node-input-account").val();
+                    if (!account || account === "_ADD_") {
+                        return;
+                    }
+                    const cfg = RED.nodes.node(account);
+                    $.ajax({
+                        url: "lg-thinq/devices",
+                        method: "POST",
+                        contentType: "application/json",
+                        data: JSON.stringify({
+                            id: account,
+                            country: cfg && cfg.country,
+                            clientId: cfg && cfg.clientId
+                        })
+                    }).done(function (body) {
+                        const devices = (body && body.devices) || [];
+                        const current = node.deviceId;
+                        $device.empty();
+                        $device.append($("<option>").val("").text("Select a device"));
+                        devices.forEach(function (d) {
+                            $device.append(
+                                $("<option>")
+                                    .val(d.deviceId)
+                                    .attr("data-name", d.name)
+                                    .attr("data-type", d.type)
+                                    .attr("data-model", d.model || "")
+                                    .text(d.name + " (" + d.type.replace("DEVICE_", "") + ")")
+                            );
+                        });
+                        if (current) {
+                            $device.val(current);
+                        }
+                    }).fail(function (xhr) {
+                        const err = (xhr.responseJSON && xhr.responseJSON.error) || "could not list devices";
+                        RED.notify(err, "error");
+                    });
+                }
+                $device.on("change", function () {
+                    const opt = $device.find("option:selected");
+                    $("#node-input-deviceName").val(opt.attr("data-name") || "");
+                    $("#node-input-deviceType").val(opt.attr("data-type") || "");
+                    $("#node-input-deviceModel").val(opt.attr("data-model") || "");
+                });
+                $("#node-input-account").on("change", loadDevices);
+                loadDevices();
+            }
+        });
+    }());
+</script>
+
+<script type="text/html" data-template-name="lg-thinq-device">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Washer">
+    </div>
+    <div class="form-row">
+        <label for="node-input-account"><i class="fa fa-user"></i> Account</label>
+        <input type="text" id="node-input-account">
+    </div>
+    <div class="form-row">
+        <label for="node-input-deviceId"><i class="fa fa-cube"></i> Device</label>
+        <select id="node-input-deviceId" style="width:70%"></select>
+    </div>
+    <div class="form-row">
+        <label for="node-input-dashboardField"><i class="fa fa-dashboard"></i> Dashboard field</label>
+        <input type="text" id="node-input-dashboardField" placeholder="empty = full object">
+    </div>
+    <div class="form-row">
+        <label></label>
+        <label for="node-input-raw" style="width:70%;">
+            <input type="checkbox" id="node-input-raw" style="display:inline-block;width:auto;margin-right:8px;">
+            Include raw ThinQ JSON on msg.raw
+        </label>
+    </div>
+    <input type="hidden" id="node-input-deviceName">
+    <input type="hidden" id="node-input-deviceType">
+    <input type="hidden" id="node-input-deviceModel">
+    <div class="form-tips">
+        Output 1 is state (poll + live changes). Output 2 is events such as
+        <code>washing_is_complete</code>. Dashboard field, if set (for example
+        <code>remainMinutes</code> or <code>currentTemperature</code>), becomes
+        <code>msg.payload</code> so Dashboard 2 <code>ui-gauge</code> / <code>ui-text</code> can use it directly. The full object is always on <code>msg.state</code>.
+    </div>
+</script>
+
+<script type="text/markdown" data-help-name="lg-thinq-device">
+LG ThinQ device
+
+Monitor and control one appliance from an `lg-thinq-account`. One node covers washer, dryer, fridge, AC, and every other ThinQ Connect type.
+
+### Outputs
+
+1. **state** — poll, live MQTT change, or command reply
+2. **event** — notifications such as `washing_is_complete`
+
+`msg.state` is always the normalized object. `msg.payload` is that object, or a single field when **Dashboard field** is set, so Dashboard 2 gauges and text widgets can be wired without a Change node.
+
+### Inputs
+
+Send `status` to refresh. Washer: `"start"` / `"stop"` / `"off"`. AC: `true`/`false`, `"cool"`, or `{ "temperature": 24, "mode": "cool" }`. Any other object is sent as ThinQ Connect control JSON.
+
+Washer remote start still requires the cycle to be loaded on the machine with Remote Start enabled.
+</script>

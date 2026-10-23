@@ -1,0 +1,72 @@
+[
+    {
+        "id": "lg_thinq_example_tab",
+        "type": "tab",
+        "label": "LG ThinQ example",
+        "disabled": false,
+        "info": "Create an Account (PAT) on the Device node, pick the washer, deploy. Output 2 is washing_is_complete. Set Dashboard field to remainMinutes to feed a Dashboard 2 ui-gauge."
+    },
+    {
+        "id": "lg_thinq_example_inject",
+        "type": "inject",
+        "z": "lg_thinq_example_tab",
+        "name": "status",
+        "props": [{ "p": "payload" }],
+        "repeat": "",
+        "crontab": "",
+        "once": false,
+        "onceDelay": 0.1,
+        "topic": "",
+        "payload": "status",
+        "payloadType": "str",
+        "x": 150,
+        "y": 160,
+        "wires": [["lg_thinq_example_device"]]
+    },
+    {
+        "id": "lg_thinq_example_device",
+        "type": "lg-thinq-device",
+        "z": "lg_thinq_example_tab",
+        "name": "Washer",
+        "account": "",
+        "deviceId": "",
+        "deviceName": "",
+        "deviceType": "",
+        "deviceModel": "",
+        "dashboardField": "",
+        "raw": false,
+        "x": 360,
+        "y": 160,
+        "wires": [["lg_thinq_example_debug_state"], ["lg_thinq_example_debug_event"]]
+    },
+    {
+        "id": "lg_thinq_example_debug_state",
+        "type": "debug",
+        "z": "lg_thinq_example_tab",
+        "name": "state",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "x": 570,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "lg_thinq_example_debug_event",
+        "type": "debug",
+        "z": "lg_thinq_example_tab",
+        "name": "event (cycle complete)",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "x": 630,
+        "y": 200,
+        "wires": []
+    }
+]
